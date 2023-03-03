@@ -1,51 +1,16 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using Polly;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
-using RabbitMQSamples.MinimalApi.Models;
+using RabbitMQSamples.Application.Common.Commands;
+using RabbitMQSamples.Application.Common.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-
-#region RabbitMQ
-
-var factory = new ConnectionFactory()
-{
-    HostName = "localhost",
-    UserName = "user",
-    Password = "user",
-    VirtualHost = "local",
-    Port = 5672,
-    AutomaticRecoveryEnabled = true,
-    NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
-};
-
-var policy = Policy.Handle<BrokerUnreachableException>()
-    .WaitAndRetry(new[]
-    {
-        TimeSpan.FromSeconds(1),
-        TimeSpan.FromSeconds(2),
-        TimeSpan.FromSeconds(3),
-    });
-
-builder.Services.AddTransient(sp => sp.GetRequiredService<IConnection>().CreateModel());
-
-builder.Services.AddSingleton(sp =>
-       {
-           ConnectionFactory factory = new();
-           builder.Configuration.Bind("RABBITMQ", factory);
-           return factory;
-       });
-
-builder.Services.AddSingleton(
-    sp => policy.Execute(
-        () => sp.GetRequiredService<ConnectionFactory>().CreateConnection()));
-
-#endregion
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddRabbitMQ(builder.Configuration, c => c.Build());
 
 var app = builder.Build();
 
@@ -65,17 +30,22 @@ app.MapControllers();
 
 #region Endpoints
 
-app.MapPost("/message",([FromBody] HelloRequest input, [FromServices] IModel model) =>
+app.MapPost("/message",([FromBody] HelloCommand command, [FromServices] IModel model) =>
 {
     IBasicProperties basicProperties = model.CreateBasicProperties();
+    basicProperties.Persistent = true;
     basicProperties.MessageId = Guid.NewGuid().ToString("D");
 
-    var json = System.Text.Json.JsonSerializer.Serialize(input);
+    var json = JsonSerializer.Serialize(command, new JsonSerializerOptions()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    });
+
     var data = Encoding.UTF8.GetBytes(json);
 
     model.BasicPublish(
-        "hello_exchange", 
-        string.Empty, 
+        "hello_service", 
+        "Hello.Message", 
         true,
         basicProperties,
         data);
