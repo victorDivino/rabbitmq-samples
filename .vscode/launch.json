@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "MinimalApi",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "launchSettingsProfile": "RabbitMQSamples.MinimalApi",
+            "program": "${workspaceFolder}/src/RabbitMQSamples.MinimalApi/bin/Debug/net6.0/RabbitMQSamples.MinimalApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/RabbitMQSamples.MinimalApi",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+https?://\\S+:([0-9]+)",
+                "uriFormat": "https://localhost:%s/swagger/index.html"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "Consumer",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "launchSettingsProfile": "RabbitMQSamples.Consumer",
+            "program": "${workspaceFolder}/src/RabbitMQSamples.Consumer/bin/Debug/net6.0/RabbitMQSamples.Consumer.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/RabbitMQSamples.Consumer",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
+    ]
+}

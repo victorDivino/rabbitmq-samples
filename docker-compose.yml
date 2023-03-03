@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+    rabbitmq:
+      build:
+        context: ./rabbitmq
+      hostname: rabbitmq
+      container_name: rabbitmq
+      volumes:
+        - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/conf.d/11-custom.conf
+        - ./rabbitmq/database:/var/lib/rabbitmq/mnesia
+      ports:
+        - "5672:5672"
+        - "15672:15672"
+      networks:
+        - local-net
+
+networks:
+  local-net:
+    driver: bridge
